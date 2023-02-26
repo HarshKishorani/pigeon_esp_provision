@@ -1,0 +1,1 @@
+flutter pub run pigeon --input pigeons/ScanBLE.dart --dart_out lib/ScanBLE.dart --java_out ./android/app/src/main/java/io/flutter/plugins/ScanBLE.java --java_package "io.flutter.plugins"
