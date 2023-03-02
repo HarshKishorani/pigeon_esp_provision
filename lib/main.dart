@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pigeon_esp/FlutterESP.dart';
 import 'package:http/http.dart' as http;
 import 'package:esp_rainmaker/esp_rainmaker.dart';
+import 'package:pigeon_esp/scenes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      // home: Scene(),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -63,6 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     debugPrint("Token : $token");
     debugPrint("User Id : $userId");
+    debugPrint("--------------------------------------Getting Devices-------------------------------------------");
+
   }
 
   claim() async {
@@ -80,6 +84,22 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint("Claiming step 2 result received : ${response.statusCode}");
     String result = await _espFlutterProvision.sendCertificate(0, response.body);
     showResult(result);
+  }
+
+  Future<void> refresh() async {
+    MappingStatus mp = await nodeAssociation.getMappingStatus(reqId);
+    print("Mapping status : ${mp.status.toString()}");
+
+    if (mp.status == MappingRequestStatus.confirmed) {
+      //* For Time service if exists
+      // getNodeParams();
+      // updateParams();
+      print("-------------------------Navigating---------------------------------");
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Scene(accessToken: token, nodeID: associate['node_id']!)));
+    }
   }
 
   @override
@@ -149,7 +169,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   showResult(result.toString());
                   if (associate.isNotEmpty) {
                     nodeAssociation = NodeAssociation(token);
-                    reqId = await nodeAssociation.addNodeMapping(associate['node_id']!, associate['secret_key']!);
+                    reqId = await nodeAssociation.addNodeMapping(
+                        associate['node_id']!, associate['secret_key']!);
                     MappingStatus mp = await nodeAssociation.getMappingStatus(reqId);
                     print("User Node Mapping status : ${mp.status.toString()}");
                   }
@@ -158,6 +179,9 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 12,
             ),
+            ElevatedButton(
+                onPressed: refresh,
+                child: const Text("Refresh")),
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
