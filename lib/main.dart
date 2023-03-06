@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:pigeon_esp/FlutterESP.dart';
 import 'package:http/http.dart' as http;
 import 'package:esp_rainmaker/esp_rainmaker.dart';
 import 'package:pigeon_esp/scenes.dart';
+import 'package:pigeon_esp/setSchedule.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // home: Scene(),
+      // home: const SetSchedule(),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -46,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Map<String?, String?> associate = {};
   late NodeAssociation nodeAssociation;
   late String reqId;
+  Map<String, dynamic> params = {};
 
   showResult(String result) {
     debugPrint("###########################################################################");
@@ -53,6 +56,28 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint("Result Recieved : $result");
     debugPrint("");
     debugPrint("###########################################################################");
+  }
+
+  Future getNodeParams() async {
+    final queryParameters = {'node_id': associate['node_id']!};
+    http.Response response = await http.get(
+        Uri.https("api.rainmaker.espressif.com", "/v1/user/nodes/params", queryParameters),
+        headers: {HttpHeaders.authorizationHeader: token});
+    debugPrint("Response Received : ${response.body}");
+    params = jsonDecode(response.body);
+  }
+
+  updateParams() async {
+    print("----------------------Updating------------------------");
+    params["Time"]["TZ"] = "Asia/Kolkata";
+    params["Time"]["TZ-POSIX"] = "IST-5:30";
+    final queryParameters = {'node_id': associate['node_id']!};
+    http.Response response = await http.put(
+        Uri.https("api.rainmaker.espressif.com", "/v1/user/nodes/params", queryParameters),
+        body: jsonEncode(params),
+        headers: {HttpHeaders.authorizationHeader: token});
+    debugPrint("Update Status : ${response.statusCode}");
+    await getNodeParams();
   }
 
   loginUser() async {
@@ -65,8 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     debugPrint("Token : $token");
     debugPrint("User Id : $userId");
-    debugPrint("--------------------------------------Getting Devices-------------------------------------------");
-
   }
 
   claim() async {
@@ -92,13 +115,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (mp.status == MappingRequestStatus.confirmed) {
       //* For Time service if exists
-      // getNodeParams();
-      // updateParams();
+      // await getNodeParams();
       print("-------------------------Navigating---------------------------------");
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => Scene(accessToken: token, nodeID: associate['node_id']!)));
+              builder: (context) => SetSchedule(accessToken: token, nodeID: associate['node_id']!)));
     }
   }
 
@@ -179,9 +201,11 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 12,
             ),
-            ElevatedButton(
-                onPressed: refresh,
-                child: const Text("Refresh")),
+            ElevatedButton(onPressed: refresh, child: const Text("Refresh")),
+            // const SizedBox(
+            //   height: 12,
+            // ),
+            // ElevatedButton(onPressed: updateParams, child: const Text("Update Time Zone")),
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
