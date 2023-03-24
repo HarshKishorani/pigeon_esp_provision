@@ -38,6 +38,10 @@ dependencies:
   esp_rainmaker: ^1.0.0+2
   http: ^0.13.5
   weekday_selector: ^1.1.0
+  multicast_dns: ^0.3.2+3
+  esp_rainmaker_local_control:
+    path: ./esp_local_control
+  permission_handler: ^10.2.0
 
 dev_dependencies:
   flutter_test:

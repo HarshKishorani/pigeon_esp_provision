@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:esp_rainmaker_local_control/esp_rainmaker_local_control.dart';
 import 'package:flutter/material.dart';
 import 'package:pigeon_esp/FlutterESP.dart';
 import 'package:http/http.dart' as http;
 import 'package:esp_rainmaker/esp_rainmaker.dart';
-import 'package:pigeon_esp/scenes.dart';
-import 'package:pigeon_esp/setSchedule.dart';
-
-void main() {
+import 'package:pigeon_esp/LocalControl/local_control.dart';
+import 'package:permission_handler/permission_handler.dart';
+Future<void> main() async {
   runApp(const MyApp());
 }
 
@@ -69,8 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   updateParams() async {
     print("----------------------Updating------------------------");
-    params["Time"]["TZ"] = "Asia/Kolkata";
-    params["Time"]["TZ-POSIX"] = "IST-5:30";
+    // params["Time"]["TZ"] = "Asia/Kolkata";
+    // params["Time"]["TZ-POSIX"] = "IST-5:30";
     final queryParameters = {'node_id': associate['node_id']!};
     http.Response response = await http.put(
         Uri.https("api.rainmaker.espressif.com", "/v1/user/nodes/params", queryParameters),
@@ -81,6 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   loginUser() async {
+    await Permission.bluetoothScan.request();
     login = await user.login('kishoraniharsh@gmail.com', 'Harshkk@002');
     await user
         .extendSession('kishoraniharsh@gmail.com', login.refreshToken)
@@ -120,7 +121,8 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => SetSchedule(accessToken: token, nodeID: associate['node_id']!)));
+              builder: (context) =>
+                  localControl(accessToken: token, nodeID: associate['node_id']!)));
     }
   }
 
